@@ -1,0 +1,12 @@
+{
+  "contacts": {},
+  "stats": {
+    "totalMessages": 0,
+    "commandsUsed": 0,
+    "startedAt": null
+  },
+  "settings": {
+    "maintenance": false,
+    "autoRead": true
+  }
+}
