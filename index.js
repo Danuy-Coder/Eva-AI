@@ -9,6 +9,7 @@ import {
   DisconnectReason,
   fetchLatestBaileysVersion,
   makeCacheableSignalKeyStore,
+  makeInMemoryStore,
 } from "@whiskeysockets/baileys";
 import pino from "pino";
 import qrcode from "qrcode-terminal";
@@ -35,6 +36,9 @@ const appLogger = pino(
     },
   }
 );
+
+// ── In-Memory Store (opsional, untuk history pesan) ──
+const store = makeInMemoryStore({ logger });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //           EXPRESS REST API SERVER
@@ -106,11 +110,17 @@ async function startBot() {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
-    printQRInTerminal: true,
+    printQRInTerminal: false,        // Kita handle manual via qrcode-terminal
     syncFullHistory: false,
     generateHighQualityLinkPreview: true,
-    getMessage: async () => undefined,
+    getMessage: async (key) => {
+      const msg = await store.loadMessage(key.remoteJid, key.id);
+      return msg?.message || undefined;
+    },
   });
+
+  // Bind store ke socket
+  store.bind(sock.ev);
 
   // ── QR Code Handler ────────────────────
   sock.ev.on("connection.update", async (update) => {
